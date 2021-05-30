@@ -1,4 +1,6 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'dart:math';
 
 void main() {
   runApp(MyApp());
@@ -10,104 +12,438 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Flutter Demo',
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // Try running your application with "flutter run". You'll see the
-        // application has a blue toolbar. Then, without quitting the app, try
-        // changing the primarySwatch below to Colors.green and then invoke
-        // "hot reload" (press "r" in the console where you ran "flutter run",
-        // or simply save your changes to "hot reload" in a Flutter IDE).
-        // Notice that the counter didn't reset back to zero; the application
-        // is not restarted.
-        primarySwatch: Colors.blue,
+        primarySwatch: Colors.deepOrange,
+        accentColor: Colors.orangeAccent,
       ),
-      home: MyHomePage(title: 'Flutter Demo Home Page'),
+      home: MyHomePage(),
     );
   }
 }
 
 class MyHomePage extends StatefulWidget {
-  MyHomePage({Key key, this.title}) : super(key: key);
-
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
-  final String title;
-
   @override
   _MyHomePageState createState() => _MyHomePageState();
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
+  String dersAdi;
+  int dersKredi = 1;
+  double dersHarfDegeri = 4;
+  List<Ders> tumDersler;
+  var formKey = GlobalKey<FormState>();
+  double ortalama = 0;
+  static int sayac=0;
 
-  void _incrementCounter() {
-    setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
-    });
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    tumDersler = [];
   }
 
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
     return Scaffold(
+      resizeToAvoidBottomInset: false,
       appBar: AppBar(
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
-      ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Invoke "debug painting" (press "p" in the console, choose the
-          // "Toggle Debug Paint" action from the Flutter Inspector in Android
-          // Studio, or the "Toggle Debug Paint" command in Visual Studio Code)
-          // to see the wireframe for each widget.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            Text(
-              'You have pushed the button this many times:',
-            ),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headline4,
-            ),
-          ],
-        ),
+        title: Text("Ortalama Hesapla"),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
+        backgroundColor: Colors.deepOrange,
+        onPressed: () {
+          if (formKey.currentState.validate()) {
+            formKey.currentState.save();
+          }
+        },
         child: Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
+      ),
+      body: OrientationBuilder(
+        builder: (context,orientation) {
+          if(orientation ==Orientation.portrait){
+            return uygulamaGovdesi();
+          }else{
+            return uygulamaGovdesiLandscape();
+          }
+
+          }),
     );
   }
+
+  Widget uygulamaGovdesi() {
+    return Container(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: <Widget>[
+          Container(
+            child: Container(
+              margin: EdgeInsets.all(10),
+              child: Form(
+                key: formKey,
+                child: Column(
+                  children: <Widget>[
+                    TextFormField(
+                      decoration: InputDecoration(
+                        labelText: "Ders Adı",
+                        hintText: "Ders Adı Giriniz",
+                        enabledBorder: OutlineInputBorder(
+                          borderSide:
+                              BorderSide(color: Colors.black26, width: 1),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderSide:
+                              BorderSide(color: Colors.orangeAccent, width: 2),
+                        ),
+                        border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(10)),
+                      ),
+                      validator: (girilenDeger) {
+                        if (girilenDeger.length > 0) {
+                          return null;
+                        } else
+                          return "Ders Adı Boş Olamaz ";
+                      },
+                      onSaved: (kaydedilecekDeger) {
+                        dersAdi = kaydedilecekDeger;
+                        setState(() {
+                          tumDersler
+                              .add(Ders(dersAdi, dersHarfDegeri, dersKredi, rastgeleRenkOlustur()));
+                          ortalama = 0;
+                          ortalamaHesapla();
+                        });
+                      },
+                    ),
+                    Container(
+                      margin: EdgeInsets.only(top: 10, bottom: 5),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        children: <Widget>[
+                          Container(
+                            child: DropdownButtonHideUnderline(
+                              child: DropdownButton<int>(
+                                  items: dersKredileriItems(),
+                                  value: dersKredi,
+                                  onChanged: (secilenKredi) {
+                                    setState(() {
+                                      dersKredi = secilenKredi;
+                                    });
+                                  }),
+                            ),
+                            padding: EdgeInsets.symmetric(
+                                vertical: 4, horizontal: 20),
+                            decoration: BoxDecoration(
+                              border: Border.all(
+                                  color: Colors.orangeAccent, width: 2),
+                              borderRadius:
+                                  BorderRadius.all(Radius.circular(10)),
+                            ),
+                          ),
+                          Container(
+                            child: DropdownButtonHideUnderline(
+                              child: DropdownButton<double>(
+                                items: dersHarfDegerleriItems(),
+                                value: dersHarfDegeri,
+                                onChanged: (secilenHarf) {
+                                  setState(() {
+                                    dersHarfDegeri = secilenHarf;
+                                  });
+                                },
+                              ),
+                            ),
+                            padding: EdgeInsets.symmetric(
+                                vertical: 4, horizontal: 20),
+                            decoration: BoxDecoration(
+                              border: Border.all(
+                                  color: Colors.orangeAccent, width: 2),
+                              borderRadius:
+                                  BorderRadius.all(Radius.circular(10)),
+                            ),
+                          )
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          Container(
+            color: Colors.deepOrange,
+            height: 60,
+            margin: EdgeInsets.fromLTRB(0, 10, 0, 10),
+            child: Center(
+                child: RichText(
+              text: TextSpan(
+                children: [
+                  TextSpan(text: "Ortalama : ", style: TextStyle(fontSize: 18)),
+                  TextSpan(
+                      text: tumDersler.length == 0 ? "0.0" : "${ortalama.toStringAsFixed(2)}",
+                      style:
+                          TextStyle(fontSize: 22, fontWeight: FontWeight.w400)),
+                ],
+              ),
+            )),
+          ),
+          Expanded(
+              child: Container(
+                  color: Colors.white24,
+                  child: ListView.builder(
+                    itemBuilder: _listeElemanlariniOlustur,
+                    itemCount: tumDersler.length,
+                  ))),
+        ],
+      ),
+    );
+  }
+
+  List<DropdownMenuItem<int>> dersKredileriItems() {
+    List<DropdownMenuItem<int>> krediler = [];
+    for (int i = 1; i <= 10; i++) {
+      krediler.add(DropdownMenuItem<int>(
+        value: i,
+        child: Text("$i Kredi"),
+      ));
+    }
+    return krediler;
+  }
+
+  List<DropdownMenuItem<double>> dersHarfDegerleriItems() {
+    List<DropdownMenuItem<double>> harfnotlari = [];
+
+    harfnotlari.add(DropdownMenuItem(
+      child: Text("AA"),
+      value: 4,
+    ));
+    harfnotlari.add(DropdownMenuItem(
+      child: Text("BA"),
+      value: 3.5,
+    ));
+    harfnotlari.add(DropdownMenuItem(
+      child: Text("BB"),
+      value: 3,
+    ));
+    harfnotlari.add(DropdownMenuItem(
+      child: Text("CB"),
+      value: 2.5,
+    ));
+    harfnotlari.add(DropdownMenuItem(
+      child: Text("CC"),
+      value: 2,
+    ));
+    harfnotlari.add(DropdownMenuItem(
+      child: Text("DC"),
+      value: 1.5,
+    ));
+    harfnotlari.add(DropdownMenuItem(
+      child: Text("DD"),
+      value: 1,
+    ));
+    harfnotlari.add(DropdownMenuItem(
+      child: Text("FF"),
+      value: 0,
+    ));
+
+    return harfnotlari;
+  }
+
+  Widget _listeElemanlariniOlustur(BuildContext context, int index) {
+
+    sayac++;
+    debugPrint(sayac.toString());
+    //Color olusanRastgeleRenk= rastgeleRenkOlustur();
+
+    return Dismissible(
+      key: Key(sayac.toString()),
+      direction: DismissDirection.startToEnd,
+      onDismissed: (direction) {
+        setState(() {
+          tumDersler.removeAt(index);
+          ortalamaHesapla();
+        });
+      },
+      child: Container(
+        margin: EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          border: Border.all(color: tumDersler[index].renk,width: 2),
+          borderRadius: BorderRadius.all(Radius.circular(10)),
+        ),
+        child: ListTile(
+          leading: Icon(Icons.done,size: 30,color: tumDersler[index].renk,),
+          title: Text(tumDersler[index].ad.toString()),
+          trailing: Icon(Icons.keyboard_arrow_right),
+          subtitle: Text(tumDersler[index].kredi.toString() +
+              "kredi Ders not değeri" +
+              tumDersler[index].harfDegeri.toString()),
+        ),
+      ),
+    );
+  }
+
+  void ortalamaHesapla() {
+    double toplamNot = 0;
+    double toplamKredi = 0;
+
+    for (var oankiDers in tumDersler) {
+      var kredi = oankiDers.kredi;
+      var harfDegeri = oankiDers.harfDegeri;
+
+      toplamKredi += kredi;
+      toplamNot = toplamNot + (harfDegeri + kredi);
+    }
+    ortalama = toplamNot / toplamKredi;
+  }
+
+  Color rastgeleRenkOlustur() {
+
+    return Color.fromARGB(150 + Random().nextInt(105), Random().nextInt(255), Random().nextInt(255), Random().nextInt(255));
+
+  }
+
+  Widget uygulamaGovdesiLandscape() {
+    return Container(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(child: Column(
+            children: [
+              Container(
+                margin: EdgeInsets.all(10),
+                child: Form(
+                  key: formKey,
+                  child: Column(
+                    children: <Widget>[
+                      TextFormField(
+                        decoration: InputDecoration(
+                          labelText: "Ders Adı",
+                          hintText: "Ders Adı Giriniz",
+                          enabledBorder: OutlineInputBorder(
+                            borderSide:
+                            BorderSide(color: Colors.black26, width: 1),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderSide:
+                            BorderSide(color: Colors.orangeAccent, width: 2),
+                          ),
+                          border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10)),
+                        ),
+                        validator: (girilenDeger) {
+                          if (girilenDeger.length > 0) {
+                            return null;
+                          } else
+                            return "Ders Adı Boş Olamaz ";
+                        },
+                        onSaved: (kaydedilecekDeger) {
+                          dersAdi = kaydedilecekDeger;
+                          setState(() {
+                            tumDersler
+                                .add(Ders(dersAdi, dersHarfDegeri, dersKredi, rastgeleRenkOlustur()));
+                            ortalama = 0;
+                            ortalamaHesapla();
+                          });
+                        },
+                      ),
+                      Container(
+                        margin: EdgeInsets.only(top: 10, bottom: 5),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                          children: <Widget>[
+                            Container(
+                              child: DropdownButtonHideUnderline(
+                                child: DropdownButton<int>(
+                                    items: dersKredileriItems(),
+                                    value: dersKredi,
+                                    onChanged: (secilenKredi) {
+                                      setState(() {
+                                        dersKredi = secilenKredi;
+                                      });
+                                    }),
+                              ),
+                              padding: EdgeInsets.symmetric(
+                                  vertical: 4, horizontal: 20),
+                              decoration: BoxDecoration(
+                                border: Border.all(
+                                    color: Colors.orangeAccent, width: 2),
+                                borderRadius:
+                                BorderRadius.all(Radius.circular(10)),
+                              ),
+                            ),
+                            Container(
+                              child: DropdownButtonHideUnderline(
+                                child: DropdownButton<double>(
+                                  items: dersHarfDegerleriItems(),
+                                  value: dersHarfDegeri,
+                                  onChanged: (secilenHarf) {
+                                    setState(() {
+                                      dersHarfDegeri = secilenHarf;
+                                    });
+                                  },
+                                ),
+                              ),
+                              padding: EdgeInsets.symmetric(
+                                  vertical: 4, horizontal: 20),
+                              decoration: BoxDecoration(
+                                border: Border.all(
+                                    color: Colors.orangeAccent, width: 2),
+                                borderRadius:
+                                BorderRadius.all(Radius.circular(10)),
+                              ),
+                            )
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              Expanded(
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.deepOrange,
+                    border: Border.all(color: Colors.deepOrange, width: 2),
+                    borderRadius: BorderRadius.all(Radius.circular(4)),
+                  ),
+                  height: 60,
+                  margin: EdgeInsets.fromLTRB(0, 10, 0, 10),
+                  child: Center(
+                      child: RichText(
+                        text: TextSpan(
+                          children: [
+                            TextSpan(text: "Ortalama : ", style: TextStyle(fontSize: 18)),
+                            TextSpan(
+                                text: tumDersler.length == 0 ? "0.0" : "${ortalama.toStringAsFixed(2)}",
+                                style:
+                                TextStyle(fontSize: 22, fontWeight: FontWeight.w400)),
+                          ],
+                        ),
+                      )),
+                ),
+              ),
+            ],
+          ),
+          flex: 1,
+          ),
+          Expanded(
+              child: Container(
+                  color: Colors.white24,
+                  child: ListView.builder(
+                    itemBuilder: _listeElemanlariniOlustur,
+                    itemCount: tumDersler.length,
+                  )),flex: 1,
+          ),
+        ],
+      ),
+    );
+
+  }
+}
+
+class Ders {
+  String ad;
+  double harfDegeri;
+  int kredi;
+  Color renk;
+
+  Ders(this.ad, this.harfDegeri, this.kredi,this.renk);
 }
